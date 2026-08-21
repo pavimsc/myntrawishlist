@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fashion Wishlist A/B Experiment Prototype</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f8f8f8;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 300px 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ===== LEFT COLUMN: PRODUCTS & WISHLIST ===== */
+    .products-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #1a1a1a;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 8px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .product-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 150px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .product-info {
+      padding: 12px;
+    }
+
+    .product-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+
+    .product-price {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+
+    /* Variant A styles */
+    .variant-a .product-card {
+      border: 1px solid #ddd;
+    }
+
+    .variant-a .product-button {
+      background: #2c3e50;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .variant-a .product-button:hover {
+      background: #1a252f;
+    }
+
+    /* Variant B styles */
+    .variant-b .product-card {
+      border: 2px solid #10b981;
+      background: #f0fdf4;
+    }
+
+    .variant-b .product-urgency {
+      background: #ef4444;
+      color: white;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: inline-block;
+      border-radius: 3px;
+    }
+
+    .variant-b .product-discount {
+      background: #10b981;
+      color: white;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline;
+      margin-left: 4px;
+      border-radius: 3px;
+    }
+
+    .variant-b .product-button {
+      background: #10b981;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .variant-b .product-button:hover {
+      background: #059669;
+    }
+
+    /* Wishlist section */
+    .wishlist-section {
+      border-top: 2px solid #e0e0e0;
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+
+    .wishlist-empty {
+      color: #999;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .wishlist-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .wishlist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #f8f8f8;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .wishlist-item-name {
+      flex: 1;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .wishlist-item-price {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-right: 12px;
+    }
+
+    .wishlist-remove {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .wishlist-remove:hover {
+      background: #c0392b;
+    }
+
+    .wishlist-count {
+      font-size: 12px;
+      color: #666;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    /* ===== CENTER COLUMN: CONTROLS ===== */
+    .controls-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .variant-toggle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .variant-btn {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .variant-btn:hover {
+      border-color: #bbb;
+    }
+
+    .variant-btn.active {
+      background: #2c3e50;
+      color: white;
+      border-color: #2c3e50;
+    }
+
+    .day-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .day-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2c3e50;
+      cursor: pointer;
+    }
+
+    .day-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #2c3e50;
+      cursor: pointer;
+      border: none;
+    }
+
+    .day-display {
+      text-align: center;
+      font-size: 14px;
+      color: #1a1a1a;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .reset-btn {
+      width: 100%;
+      padding: 10px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+
+    .reset-btn:hover {
+      background: #c0392b;
+    }
+
+    .status-display {
+      background: #f8f8f8;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #666;
+      margin-top: 12px;
+    }
+
+    .status-display strong {
+      color: #1a1a1a;
+    }
+
+    /* ===== RIGHT COLUMN: ANALYTICS ===== */
+    .analytics-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: #f8f8f8;
+      padding: 16px;
+      border-radius: 6px;
+      border-left: 4px solid #2c3e50;
+    }
+
+    .metric-card.variant-a {
+      border-left-color: #95a5a6;
+    }
+
+    .metric-card.variant-b {
+      border-left-color: #10b981;
+    }
+
+    .metric-card.variant-b.winner {
+      background: #f0fdf4;
+      border-left-color: #059669;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .metric-detail {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .metric-uplift {
+      color: #10b981;
+      font-weight: 600;
+    }
+
+    .comparison-table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+    }
+
+    .comparison-table th {
+      background: #2c3e50;
+      color: white;
+      padding: 10px 8px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .comparison-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .comparison-table tr:nth-child(even) {
+      background: #f8f8f8;
+    }
+
+    .comparison-table strong {
+      color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>👗 Fashion Wishlist A/B Experiment</h1>
+    <p>Interactive prototype demonstrating variant impact on user engagement</p>
+  </div>
+
+  <div class="container">
+    <!-- LEFT COLUMN: PRODUCTS & WISHLIST -->
+    <div class="products-section variant-a" id="productsSection">
+      <div class="section-title">🛍️ Products</div>
+      <div class="products-grid" id="productsGrid"></div>
+
+      <div class="wishlist-section">
+        <div class="section-title">❤️ My Wishlist</div>
+        <div id="wishlistContainer"></div>
+        <div class="wishlist-count" id="wishlistCount"></div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: CONTROLS -->
+    <div class="controls-section">
+      <div class="control-group">
+        <label class="control-label">Variant</label>
+        <div class="variant-toggle">
+          <button class="variant-btn active" data-variant="A">Variant A<br><small>(Control)</small></button>
+          <button class="variant-btn" data-variant="B">Variant B<br><small>(Urgency)</small></button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">Day (0-30)</label>
+        <input type="range" class="day-slider" id="daySlider" min="0" max="30" value="0">
+        <div class="day-display" id="dayDisplay">Day 0</div>
+      </div>
+
+      <button class="reset-btn">🔄 Reset Experiment</button>
+
+      <div class="status-display">
+        <div><strong>Current State</strong></div>
+        <div id="statusText">Variant: A | Day: 0 | Wishlist: 0 items</div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: ANALYTICS -->
+    <div class="analytics-section">
+      <div class="section-title">📊 Analytics Dashboard</div>
+      <div id="analyticsContainer"></div>
+      <table class="comparison-table" id="comparisonTable"></table>
+    </div>
+  </div>
+
+  <script>
+    // ===== PRODUCT DATA =====
+    const PRODUCTS = [
+      { id: 1, name: "Luxury Sunglasses", price: 180, stock: 5 },
+      { id: 2, name: "Leather Handbag", price: 250, stock: 2 },
+      { id: 3, name: "Silk Scarf", price: 65, stock: 10 },
+      { id: 4, name: "Designer Watch", price: 450, stock: 3 }
+    ];
+
+    // ===== STATE =====
+    let state = {
+      variant: 'A',
+      currentDay: 0,
+      wishlist: []
+    };
+
+    // ===== METRIC FUNCTIONS (Hardcoded, Day-Scaled) =====
+    function getMetrics(day, variant) {
+      const baseConvA = 5;
+      const baseConvB = 8;
+      const dayBoost = (day / 30) * 7; // 0% to 7% boost
+
+      const conversionRateA = baseConvA + dayBoost;
+      const conversionRateB = baseConvB + dayBoost;
+
+      const baseRevenueA = 1200;
+      const baseRevenueB = 1500;
+      const dailyA = 25;
+      const dailyB = 40;
+
+      return {
+        conversionRate: variant === 'A'
+          ? conversionRateA.toFixed(1)
+          : conversionRateB.toFixed(1),
+        avgItems: variant === 'A' ? 2.1 : 3.2,
+        revenue: variant === 'A'
+          ? Math.round(baseRevenueA + (day * dailyA))
+          : Math.round(baseRevenueB + (day * dailyB)),
+        wishlistAdds: Math.round(45 + (day * 1.5) * (variant === 'A' ? 1 : 1.3)),
+        revisits: Math.round(30 + (day * 1.2) * (variant === 'A' ? 1 : 1.4))
+      };
+    }
+
+    // ===== RENDER PRODUCTS =====
+    function renderProducts() {
+      const grid = document.getElementById('productsGrid');
+      grid.innerHTML = PRODUCTS.map(product => {
+        const isVariantB = state.variant === 'B';
+        const discount = isVariantB ? Math.floor(product.price * 0.15) : 0;
+        const discountedPrice = product.price - discount;
+
+        return `
+          <div class="product-card">
+            <div class="product-image">${product.name}</div>
+            <div class="product-info">
+              <div class="product-name">${product.name}</div>
+              ${isVariantB ? `
+                <div style="margin-bottom: 6px;">
+                  <span class="product-urgency">Only ${product.stock} left!</span>
+                </div>
+                <div class="product-price">
+                  ₹${discountedPrice.toLocaleString()}
+                  <span class="product-discount">-15%</span>
+                </div>
+              ` : `
+                <div class="product-price">₹${product.price.toLocaleString()}</div>
+              `}
+              <button class="product-button" onclick="addToWishlist(${product.id})">
+                ${isVariantB ? '🔒 Lock Savings Now' : '💕 Add to Wishlist'}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ===== WISHLIST OPERATIONS =====
+    function addToWishlist(productId) {
+      const product = PRODUCTS.find(p => p.id === productId);
+      if (product && !state.wishlist.find(w => w.id === productId)) {
+        state.wishlist.push({ ...product, addedDay: state.currentDay });
+        renderWishlist();
+        updateAnalytics();
+      }
+    }
+
+    function removeFromWishlist(productId) {
+      state.wishlist = state.wishlist.filter(w => w.id !== productId);
+      renderWishlist();
+      updateAnalytics();
+    }
+
+    function renderWishlist() {
+      const container = document.getElementById('wishlistContainer');
+      const count = document.getElementById('wishlistCount');
+
+      if (state.wishlist.length === 0) {
+        container.innerHTML = '<div class="wishlist-empty">No items yet. Add products to your wishlist!</div>';
+        count.textContent = '';
+      } else {
+        container.innerHTML = `
+          <div class="wishlist-items">
+            ${state.wishlist.map(item => `
+              <div class="wishlist-item">
+                <span class="wishlist-item-name">${item.name}</span>
+                <span class="wishlist-item-price">₹${item.price.toLocaleString()}</span>
+                <button class="wishlist-remove" onclick="removeFromWishlist(${item.id})">Remove</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        count.textContent = `Total items: ${state.wishlist.length} | Est. value: ₹${state.wishlist.reduce((sum, item) => sum + item.price, 0).toLocaleString()}`;
+      }
+    }
+
+    // ===== VARIANT SWITCHING =====
+    function switchVariant(variant) {
+      state.variant = variant;
+      document.querySelectorAll('.variant-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.variant === variant);
+      });
+      document.getElementById('productsSection').className = `products-section variant-${variant.toLowerCase()}`;
+      renderProducts();
+      updateAnalytics();
+      updateStatus();
+    }
+
+    // ===== DAY PROGRESSION =====
+    function updateDay(day) {
+      state.currentDay = parseInt(day);
+      document.getElementById('dayDisplay').textContent = `Day ${state.currentDay}`;
+      updateAnalytics();
+      updateStatus();
+    }
+
+    // ===== ANALYTICS RENDERING =====
+    function updateAnalytics() {
+      const metricsA = getMetrics(state.currentDay, 'A');
+      const metricsB = getMetrics(state.currentDay, 'B');
+
+      const convA = parseFloat(metricsA.conversionRate);
+      const convB = parseFloat(metricsB.conversionRate);
+      const uplift = ((convB - convA) / convA * 100).toFixed(1);
+
+      const container = document.getElementById('analyticsContainer');
+      container.innerHTML = `
+        <div style="margin-bottom: 20px; padding: 12px; background: #fff3cd; border-radius: 4px; font-size: 12px; color: #856404;">
+          <strong>📈 Variant B shows ${uplift}% higher conversion rate</strong><br>
+          This demonstrates the impact of urgency + discounts on purchase intent.
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 13px; margin-bottom: 10px; color: #666;">Variant A (Control)</h4>
+          <div class="metric-card variant-a">
+            <div class="metric-label">Conversion Rate</div>
+            <div class="metric-value">${metricsA.conversionRate}%</div>
+            <div class="metric-detail">Day ${state.currentDay}</div>
+          </div>
+          <div class="metric-card variant-a" style="margin-top: 8px;">
+            <div class="metric-label">Revenue Impact</div>
+            <div class="metric-value">₹${metricsA.revenue.toLocaleString()}</div>
+            <div class="metric-detail">Cumulative estimate</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 style="font-size: 13px; margin-bottom: 10px; color: #666;">Variant B (Urgency + Discount)</h4>
+          <div class="metric-card variant-b winner">
+            <div class="metric-label">Conversion Rate</div>
+            <div class="metric-value">${metricsB.conversionRate}%</div>
+            <div class="metric-detail"><span class="metric-uplift">↑ +${uplift}%</span> vs Control</div>
+          </div>
+          <div class="metric-card variant-b winner" style="margin-top: 8px;">
+            <div class="metric-label">Revenue Impact</div>
+            <div class="metric-value">₹${metricsB.revenue.toLocaleString()}</div>
+            <div class="metric-detail"><span class="metric-uplift">↑ +₹${(metricsB.revenue - metricsA.revenue).toLocaleString()}</span> vs A</div>
+          </div>
+        </div>
+      `;
+
+      // Comparison table
+      const table = document.getElementById('comparisonTable');
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Variant A</th>
+            <th>Variant B</th>
+            <th>Uplift</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Conversion Rate</strong></td>
+            <td>${metricsA.conversionRate}%</td>
+            <td><strong>${metricsB.conversionRate}%</strong></td>
+            <td><span class="metric-uplift">+${uplift}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Revenue</strong></td>
+            <td>₹${metricsA.revenue.toLocaleString()}</td>
+            <td><strong>₹${metricsB.revenue.toLocaleString()}</strong></td>
+            <td><span class="metric-uplift">+₹${(metricsB.revenue - metricsA.revenue).toLocaleString()}</span></td>
+          </tr>
+          <tr>
+            <td><strong>Avg Wishlist Items</strong></td>
+            <td>${metricsA.avgItems}</td>
+            <td><strong>${metricsB.avgItems}</strong></td>
+            <td><span class="metric-uplift">+${((metricsB.avgItems - metricsA.avgItems) / metricsA.avgItems * 100).toFixed(0)}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Wishlist Adds</strong></td>
+            <td>${metricsA.wishlistAdds}</td>
+            <td><strong>${metricsB.wishlistAdds}</strong></td>
+            <td><span class="metric-uplift">+${((metricsB.wishlistAdds - metricsA.wishlistAdds) / metricsA.wishlistAdds * 100).toFixed(0)}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Revisits</strong></td>
+            <td>${metricsA.revisits}</td>
+            <td><strong>${metricsB.revisits}</strong></td>
+            <td><span class="metric-uplift">+${((metricsB.revisits - metricsA.revisits) / metricsA.revisits * 100).toFixed(0)}%</span></td>
+          </tr>
+        </tbody>
+      `;
+    }
+
+    // ===== STATUS DISPLAY =====
+    function updateStatus() {
+      document.getElementById('statusText').textContent =
+        `Variant: ${state.variant} | Day: ${state.currentDay} | Wishlist: ${state.wishlist.length} items`;
+    }
+
+    // ===== RESET =====
+    function resetExperiment() {
+      state.variant = 'A';
+      state.currentDay = 0;
+      state.wishlist = [];
+      document.getElementById('daySlider').value = 0;
+      switchVariant('A');
+      renderWishlist();
+      updateStatus();
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.querySelectorAll('.variant-btn').forEach(btn => {
+      btn.addEventListener('click', () => switchVariant(btn.dataset.variant));
+    });
+
+    document.getElementById('daySlider').addEventListener('input', (e) => updateDay(e.target.value));
+
+    document.querySelector('.reset-btn').addEventListener('click', resetExperiment);
+
+    // ===== INIT =====
+    renderProducts();
+    renderWishlist();
+    updateAnalytics();
+    updateStatus();
+  </script>
+</body>
+</html>
