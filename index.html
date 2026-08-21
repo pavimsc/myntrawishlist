@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Myntra - Fashion Shopping</title>
+  <title>Fashion Wishlist - A/B Test</title>
   <style>
     * {
       margin: 0;
@@ -618,7 +618,8 @@
     <div class="control-group">
       <label class="control-label">Variant</label>
       <div class="variant-toggle">
-        <button class="variant-btn active" data-variant="A" onclick="switchVariant('A')">A</button>
+        <button class="variant-btn active" data-variant="CONTROL" onclick="switchVariant('CONTROL')">Control</button>
+        <button class="variant-btn" data-variant="A" onclick="switchVariant('A')">A</button>
         <button class="variant-btn" data-variant="B" onclick="switchVariant('B')">B</button>
       </div>
     </div>
@@ -649,10 +650,25 @@
 
     // STATE
     let state = {
-      variant: 'A',
+      variant: 'CONTROL',
       currentDay: 0,
       wishlist: []
     };
+
+    // REMINDER SCHEDULE FOR VARIANT A
+    const REMINDER_DAYS = [1, 7, 14, 21, 30];
+
+    // GENERATE REMINDER FOR VARIANT A
+    function getReminder(productId, daysSaved) {
+      const reminders = [
+        { day: 1, message: "Still thinking about this?", icon: "💭" },
+        { day: 7, message: "🔥 Price dropped! Your item is now ₹" + (4000 + Math.random() * 1000).toFixed(0), icon: "💰" },
+        { day: 14, message: "👀 Popular pick - 23 people bought this recently", icon: "🔥" },
+        { day: 21, message: "⚠️ Low stock - Only 2 left!", icon: "⚠️" },
+        { day: 30, message: "⏰ Last day of your 30-day reminders", icon: "⏰" }
+      ];
+      return reminders.find(r => r.day === daysSaved);
+    }
 
     // PAGE NAVIGATION
     function showPage(pageName) {
@@ -680,6 +696,7 @@
       const grid = document.getElementById('productsGrid');
       grid.innerHTML = PRODUCTS.map(product => {
         const isWishlisted = state.wishlist.some(w => w.id === product.id);
+        const isVariantA = state.variant === 'A';
         const isVariantB = state.variant === 'B';
         const discount = isVariantB ? Math.floor(product.price * 0.12) : 0;
         const discountedPrice = product.price - discount;
@@ -704,6 +721,16 @@
                   <span class="product-discount-tag show">-${Math.floor(discount/product.price*100)}%</span>
                 ` : ''}
               </div>
+              ${isVariantA ? `
+                <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                  💬 Get notified about price drops & availability
+                </div>
+              ` : ''}
+              ${isVariantB ? `
+                <div style="font-size: 12px; color: #10b981; margin-bottom: 8px; font-weight: 500;">
+                  🔒 Price locked for 30 days
+                </div>
+              ` : ''}
               <div class="product-footer">
                 <button class="wishlist-btn ${isWishlisted ? 'added' : ''}" onclick="addToWishlist(${product.id})">
                   ${isWishlisted ? '❤️ Wishlisted' : '🤍 Wishlist'}
@@ -767,31 +794,45 @@
           ${state.wishlist.map(item => {
             const daysSaved = state.currentDay - item.addedDay;
             const daysRemaining = Math.max(0, 30 - daysSaved);
+            const isVariantA = state.variant === 'A';
             const isVariantB = state.variant === 'B';
-            const currentPrice = item.price - Math.floor(item.price * 0.02 * daysSaved); // Simulate price drift
+            const currentPrice = item.price - Math.floor(item.price * 0.02 * daysSaved);
             const savings = isVariantB ? Math.max(0, item.lockedPrice - currentPrice) : 0;
+            const reminder = isVariantA ? getReminder(item.id, daysSaved) : null;
+            const showReminder = isVariantA && REMINDER_DAYS.includes(daysSaved);
 
             return `
               <div class="wishlist-item">
                 <div class="wishlist-item-image">
                   ${item.name}
-                  ${isVariantB ? `<div class="wishlist-item-badge show">Price Locked 🔒</div>` : ''}
+                  ${showReminder ? `<div class="wishlist-item-badge show" style="background: #e75480;">${reminder.icon} ${reminder.message}</div>` : ''}
+                  ${isVariantB ? `<div class="wishlist-item-badge show">🔒 Price Locked</div>` : ''}
                 </div>
                 <div class="wishlist-item-info">
                   <div class="wishlist-item-brand">${item.brand}</div>
                   <div class="wishlist-item-name">${item.name}</div>
-                  <div class="wishlist-item-prices">
-                    <div class="wishlist-item-price">₹${currentPrice.toLocaleString()}</div>
-                    ${isVariantB && item.lockedPrice ? `
-                      <span class="wishlist-original-price show">₹${item.lockedPrice.toLocaleString()}</span>
-                      ${savings > 0 ? `<span class="wishlist-savings show">Save ₹${Math.floor(savings)}</span>` : ''}
-                    ` : ''}
-                  </div>
-                  ${isVariantB && item.lockedPrice ? `
-                    <div class="wishlist-item-days show">
-                      Price locked for <strong>${daysRemaining} days</strong> • Market price: ₹${item.price.toLocaleString()}
+
+                  ${isVariantB ? `
+                    <div style="background: #f0fdf4; padding: 10px; border-radius: 4px; margin-bottom: 10px; font-size: 12px;">
+                      <div style="color: #10b981; font-weight: 600; margin-bottom: 4px;">✓ Your price is locked</div>
+                      <div style="color: #666; margin-bottom: 4px;">Original price: <strong>₹${item.lockedPrice.toLocaleString()}</strong></div>
+                      <div style="color: #666; margin-bottom: 4px;">Market price now: ₹${currentPrice.toLocaleString()}</div>
+                      ${savings > 0 ? `<div style="color: #10b981; font-weight: 600;">You're saving: ₹${Math.floor(savings)}</div>` : ''}
+                      <div style="color: #999; margin-top: 4px; font-size: 11px;">Protection expires in ${daysRemaining} days</div>
+                    </div>
+                  ` : `
+                    <div class="wishlist-item-prices">
+                      <div class="wishlist-item-price">₹${currentPrice.toLocaleString()}</div>
+                    </div>
+                  `}
+
+                  ${showReminder && isVariantA ? `
+                    <div style="background: #ffe0e6; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                      <div style="font-size: 13px; font-weight: 600; color: #e75480; margin-bottom: 6px;">${reminder.message}</div>
+                      <button class="wishlist-item-action-btn" style="flex: 1; background: #e75480; color: white; border: none; margin-bottom: 6px;">View Item</button>
                     </div>
                   ` : ''}
+
                   <div class="wishlist-item-days show">
                     Saved ${daysSaved} day${daysSaved !== 1 ? 's' : ''} ago
                   </div>
@@ -810,9 +851,11 @@
     // SWITCH VARIANT
     function switchVariant(variant) {
       state.variant = variant;
+      state.wishlist = []; // Clear wishlist when switching variants
       document.querySelectorAll('.variant-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.variant === variant);
       });
+      updateWishlistCount();
       renderProducts();
       if (document.getElementById('wishlistPage').classList.contains('active')) {
         renderWishlist();
@@ -832,12 +875,12 @@
 
     // RESET EXPERIMENT
     function resetExperiment() {
-      state.variant = 'A';
+      state.variant = 'CONTROL';
       state.currentDay = 0;
       state.wishlist = [];
       document.getElementById('daySlider').value = 0;
       document.querySelectorAll('.variant-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.variant === 'A');
+        btn.classList.toggle('active', btn.dataset.variant === 'CONTROL');
       });
       updateWishlistCount();
       renderProducts();
